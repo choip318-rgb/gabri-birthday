@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Quest: Gabri</title>
+    <!-- Retro Pixel Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* 1. BASE STYLES */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { 
+            height: 100%; 
+            overflow: hidden; 
+            font-family: 'Press Start 2P', cursive;
+            background-color: #5C94FC; /* Mario Sky Blue */
+        }
+
+        /* 2. WORLD LAYOUT */
+        .world {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .grass {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 20%;
+            background-color: #00A800;
+            border-top: 8px solid #000;
+            background-image: repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(0,0,0,0.05) 40px, rgba(0,0,0,0.05) 80px);
+            z-index: 1;
+        }
+
+        .cloud {
+            position: absolute;
+            background: white;
+            width: 100px; height: 30px;
+            box-shadow: 10px 10px 0 #fff, -10px 10px 0 #fff, 0 20px 0 #fff;
+            opacity: 0.8;
+            animation: drift 50s linear infinite;
+        }
+
+        @keyframes drift {
+            from { transform: translateX(-200px); }
+            to { transform: translateX(110vw); }
+        }
+
+        /* 3. BIRTHDAY BOX */
+        #giftBox {
+            position: relative;
+            cursor: pointer;
+            z-index: 10;
+            transition: transform 0.1s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #giftBox:hover { transform: scale(1.05); }
+        #giftBox:active { transform: scale(0.95); }
+
+        .box-body {
+            width: 80px; height: 80px;
+            background: #FF5733;
+            border: 6px solid #000;
+            position: relative;
+        }
+
+        .box-body::after { /* Vertical Ribbon */
+            content: ''; position: absolute;
+            width: 16px; height: 100%;
+            background: #FFD700; left: 50%; transform: translateX(-50%);
+            border-left: 4px solid #000; border-right: 4px solid #000;
+        }
+
+        .bow {
+            width: 30px; height: 15px;
+            background: #FFD700; border: 4px solid #000;
+            box-shadow: -15px 0 0 #FFD700, 15px 0 0 #FFD700;
+            margin-bottom: -4px;
+        }
+
+        .instruction {
+            margin-top: 20px;
+            color: #fff; font-size: 14px;
+            text-shadow: 3px 3px 0 #000;
+        }
+
+        /* 4. ANIMATIONS: CONFETTI & PERSISTENT TEXT */
+        .confetti {
+            position: absolute;
+            pointer-events: none;
+            font-size: 10px;
+            white-space: nowrap;
+            animation: explode 1.2s ease-out forwards;
+            z-index: 20;
+        }
+
+        @keyframes explode {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--x), var(--y)) rotate(var(--r)); opacity: 0; }
+        }
+
+        /* The strand that stays */
+        #main-greeting {
+            display: none;
+            position: absolute;
+            top: 10%;
+            color: #fff;
+            font-size: 22px;
+            text-shadow: 4px 4px 0 #000, -2px -2px 0 #000;
+            z-index: 100;
+            animation: floatIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, hoverEffect 3s ease-in-out infinite;
+            text-align: center;
+            width: 100%;
+        }
+
+        @keyframes floatIn {
+            0% { transform: translateY(100px) scale(0); }
+            100% { transform: translateY(0) scale(1); }
+        }
+
+        @keyframes hoverEffect {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* 5. VIDEO PLAYER (Embedded on Home Screen) */
+        #videoContainer {
+            display: none;
+            position: relative;
+            z-index: 50;
+            width: 90%;
+            max-width: 600px;
+            background: #333; /* Dark TV shell */
+            border: 8px solid #000;
+            padding: 10px;
+            box-shadow: 15px 15px 0 rgba(0,0,0,0.3);
+            margin-bottom: 50px;
+        }
+
+        /* Pixel "Buttons" on the TV Frame */
+        #videoContainer::after {
+            content: 'POWER  ○ ○';
+            position: absolute;
+            bottom: -35px; right: 10px;
+            color: #fff; font-size: 8px;
+        }
+
+        .video-wrapper {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+            overflow: hidden;
+            border: 4px solid #000;
+        }
+
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: -45px; right: 0;
+            background: #FF5733; color: #fff;
+            border: 4px solid #000;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 10px;
+            font-family: 'Press Start 2P';
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="world">
+        <!-- Persistent Text (Initially Hidden) -->
+        <h1 id="main-greeting">Happy Birthday Gabri!</h1>
+
+        <!-- Clouds -->
+        <div class="cloud" style="top:10%; left:-100px;"></div>
+        <div class="cloud" style="top:25%; left:20%; animation-delay: -10s;"></div>
+        <div class="cloud" style="top:15%; left:70%; animation-delay: -25s;"></div>
+
+        <!-- The Video Player (Hidden on same screen) -->
+        <div id="videoContainer">
+            <button class="close-btn" onclick="closeVideo()">[X] CLOSE</button>
+            <div class="video-wrapper">
+                <!-- ADD YOUR VIDEO LINK HERE -->
+                <iframe id="videoFrame" 
+                    src="https://www.youtube.com/embed/dQw4w9WgXcQ?enablejsapi=1" 
+                    frameborder="0" allow="autoplay; encrypted-media" allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+
+        <!-- The Gift Box -->
+        <div id="giftBox" onclick="openGift()">
+            <div class="bow"></div>
+            <div class="box-body"></div>
+            <div class="instruction">CLICK TO OPEN</div>
+        </div>
+
+        <div class="grass"></div>
+    </div>
+
+    <script>
+        function openGift() {
+            const gift = document.getElementById('giftBox');
+            const greeting = document.getElementById('main-greeting');
+            const videoContainer = document.getElementById('videoContainer');
+            const videoFrame = document.getElementById('videoFrame');
+
+            // 1. Explode Confetti
+            for (let i = 0; i < 15; i++) {
+                createConfetti();
+            }
+
+            // 2. Hide Box, Show Persistent Greeting
+            gift.style.display = 'none';
+            greeting.style.display = 'block';
+
+            // 3. Pop Open Video Player (On Home Screen)
+            videoContainer.style.display = 'block';
+            
+            // Auto-play hack (requires user interaction, which we have via the click)
+            videoFrame.src += "&autoplay=1";
+        }
+
+        function createConfetti() {
+            const text = document.createElement('div');
+            text.className = 'confetti';
+            text.innerText = 'Happy Birthday Gabri!';
+            
+            // Random direction
+            const x = (Math.random() - 0.5) * 800 + 'px';
+            const y = (Math.random() - 0.5) * 800 + 'px';
+            const r = (Math.random() - 0.5) * 360 + 'deg';
+            
+            text.style.setProperty('--x', x);
+            text.style.setProperty('--y', y);
+            text.style.setProperty('--r', r);
+            
+            // Random retro colors
+            const colors = ['#FFD700', '#FF5733', '#FFFFFF', '#5C94FC', '#00A800'];
+            text.style.color = colors[Math.floor(Math.random() * colors.length)];
+            
+            document.body.appendChild(text);
+            setTimeout(() => text.remove(), 1200);
+        }
+
+        function closeVideo() {
+            const videoContainer = document.getElementById('videoContainer');
+            const gift = document.getElementById('giftBox');
+            const videoFrame = document.getElementById('videoFrame');
+            
+            // Hide player, show box again
+            videoContainer.style.display = 'none';
+            gift.style.display = 'flex';
+            
+            // Reset video to stop audio
+            const currentSrc = videoFrame.src;
+            videoFrame.src = currentSrc.replace("&autoplay=1", "");
+        }
+    </script>
+</body>
+</html>
